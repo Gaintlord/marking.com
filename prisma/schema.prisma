@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  imageUrl      String?
+  password      String?
+  accounts      Account[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  Board         Board[]
+  Token         Token[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Board {
+  id                   String        @id @unique @default(uuid())
+  boardTitle           String        @unique
+  isActive             Boolean?      @default(true)
+  pageTitle            String
+  pageDescription      String
+  isVideoReview        Boolean
+  textReviewPageTitle  String?
+  textQuestions        String[]
+  videoReviewPageTitle String
+  videoQuestions       String[]
+  personalPageTitle    String
+  thankYouPageTitle    String
+  thankYouPageMessage  String
+  userId               String
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testimonials         Testimonial[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+}
+
+model Testimonial {
+  id           String   @id @default(uuid())
+  name         String
+  email        String
+  textReview   String
+  rating       Int
+  userImageUrl String?
+  videoUrl     String?
+  boardId      String
+  board        Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Token {
+  id       String   @id @default(cuid())
+  email    String
+  token    String   @unique
+  expireAt DateTime
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
